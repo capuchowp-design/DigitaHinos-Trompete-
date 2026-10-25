@@ -1,6 +1,6 @@
 {
-  "name": "Trumpet Bounce - Visualizador MIDI",
-  "short_name": "Trumpet Bounce",
+  "name": "DigitaHinos Trompete - Visualizador MIDI",
+  "short_name": "DigitaHinos Trompete",
   "description": "Visualizador MIDI com trompete animado",
   "start_url": "./index.html",
   "display": "standalone",

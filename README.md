@@ -1,4 +1,4 @@
-# Trumpet Bounce
+# DigitaHinos Trompete
 
 Visualizador MIDI com trompete animado (Si♭ ou Dó) (3 pistões, tabela de digitação completa de Fá♯3 a Fá6 escrito, com as digitações alternativas em pistões pequenos): os pistões descem e a tubulação extra de cada um acende, com o harmônico, a pauta em clave de Sol e o compositor.
 
