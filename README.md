@@ -6,3 +6,6 @@ Visualizador MIDI com trompete animado (Si♭ ou Dó) (3 pistões, tabela de dig
 - Compositor com exportação WAV, MIDI, JSON e partitura em PDF (clave de Sol, com o desenho dos pistões sob cada nota); projetos salvos no navegador, autosave e importação de MIDI.
 - Publicação: suba os arquivos no GitHub Pages. A cada versão nova, mude `CACHE_NAME` em `sw.js`.
 - Pistões: 1 = −2 semitons, 2 = −1, 3 = −3. Alcance (som real): Mi3 a Mi♭6 (notas fora dele são dobradas de oitava).
+
+## Partitura ao vivo e repetições
+A partitura que acompanha a música mostra o desenho dos pistões sob as notas. A ordem de execução respeita repetições e casas 1.2./3., inclusive a última nota antes do coro (ex.: hino 61).

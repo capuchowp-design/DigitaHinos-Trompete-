@@ -900,7 +900,19 @@ function parseMusicXML(text){
                 else if(t==='forward'){ cur+=nm(e,'duration',0); ext=Math.max(ext,cur); }
                 else if(t==='barline'){
                     const rp=c1(e,'repeat'); if(rp){ if(rp.getAttribute('direction')==='forward') info.fwd=true; else info.bwd=true; }
-                    const en=c1(e,'ending'); if(en){ if(en.getAttribute('type')==='start') info.endStart=(en.getAttribute('number')||'1').split(/[ ,]+/).map(s=>parseInt(s)).filter(x=>x>0); else info.endStop=true; }
+                    const en=c1(e,'ending'); if(en){
+                        if(en.getAttribute('type')==='start'){
+                            let nums=(en.getAttribute('number')||'1').split(/[ ,]+/).map(s=>parseInt(s)).filter(x=>x>0);
+                            // alguns programas gravam number="2" mas o rótulo impresso é "1.2." → vale o rótulo (senão a 1ª casa seria pulada)
+                            const lab=(en.textContent||'').trim();
+                            if(/^\d+(\s*[.,;\-–]\s*\d+)*\s*\.?$/.test(lab)){
+                                const ex=new Set();
+                                lab.replace(/\.$/,'').split(/\s*[.,;]\s*/).forEach(t=>{ const r=t.split(/\s*[\-–]\s*/).map(x=>parseInt(x)).filter(x=>x>0); if(r.length===2) for(let q=r[0];q<=r[1];q++) ex.add(q); else r.forEach(q=>ex.add(q)); });
+                                if(ex.size) nums=[...ex].sort((a,b)=>a-b);
+                            }
+                            info.endStart=nums;
+                        } else { info.endStop=true; info.endNums=(en.getAttribute('number')||'').split(/[ ,]+/).map(x=>parseInt(x)).filter(x=>x>0); }
+                    }
                 } else if(t==='note'){
                     if(c1(e,'grace')) continue;
                     const isChord=!!c1(e,'chord'), dur=nm(e,'duration',0), on=isChord?lastOn:cur;
@@ -921,7 +933,8 @@ function parseMusicXML(text){
     });
     const n=MI.length; if(!n) throw new Error('Nenhum compasso encontrado');
     const len=MI.map(m=>m.ext>1e-6?m.ext:m.nom);
-    let open=null; MI.forEach(m=>{ if(m.endStart) open=m.endStart; m.volta=open; if(m.endStop) open=null; });
+    // se a casa fecha sem ter sido aberta (falha em alguns arquivos), o próprio compasso vale como essa casa
+    let open=null; MI.forEach(m=>{ if(m.endStart) open=m.endStart; m.volta=(!open&&m.endStop&&m.endNums&&m.endNums.length)?m.endNums:open; if(m.endStop) open=null; });
     // ordem de execução (repetições e casas 1ª/2ª)
     const order=[]; { let i=0,secStart=0,pass=1,jumped=false,guard=0; const taken=new Set();
         while(i<n&&guard++<n*12){
@@ -930,7 +943,13 @@ function parseMusicXML(text){
             jumped=false;
             if(m.volta&&!m.volta.includes(pass)){ i++; continue; }
             order.push(i);
-            if(m.bwd){ if(!taken.has(i)){ taken.add(i); i=secStart; pass++; jumped=true; continue; } secStart=i+1; pass=1; }
+            if(m.bwd){
+                if(!taken.has(i)){ taken.add(i); i=secStart; pass++; jumped=true; continue; }
+                // repetição esgotada: se logo depois vem uma casa de número maior (ex.: casa 1.2. e depois casa 3.), a passada continua contando
+                // (senão a 3ª casa — a última nota da estrofe antes do coro — era pulada). Caso contrário, começa uma seção nova.
+                const nx=MI[i+1]; secStart=i+1;
+                if(nx&&nx.endStart&&nx.endStart.some(q=>q>pass)) pass++; else pass=1;
+            }
             i++;
         } }
     if(!order.length) for(let i=0;i<n;i++) order.push(i);
@@ -3056,7 +3075,7 @@ function liveBuild(vi){
     LIVE.svgs=[]; LIVE.lay=[]; LIVE.heads=[]; LIVE.map=[]; LIVE.act=[]; LIVE.shown=null; LIVE.sys=-1; LIVE.ok=false;
     try{
         const src=playerScoreNotes();
-        const sd=withPlayerSource(()=>pbBuildScore({title:'',voice:vi,ts:playerTs(),valves:false}));
+        const sd=withPlayerSource(()=>pbBuildScore({title:'',voice:vi,ts:playerTs(),valves:true}));
         LIVE.svgs=sd.svgs; LIVE.lay=sd.lay; LIVE.heads=sd.heads; LIVE.W=sd.W;
         const pr=[]; src.forEach(n=>{ pr.push([n.t0,(n.beat-1)*8],[n.t1,(n.beat-1+n.duration)*8]); });
         pr.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
